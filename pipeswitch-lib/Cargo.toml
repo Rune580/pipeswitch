@@ -15,9 +15,9 @@ keywords = ["multimedia", "audio", "linux", "pipewire", "api"]
 categories = ["multimedia::audio", "config"]
 
 [dependencies]
-pipewire = "0.5"
+pipewire = "0.8.0"
 thiserror = "1.0.37"
 serde = { version = "1.0.147", features = ["derive"] }
-toml_edit = { version = "0.15.0", features = ["serde"] }
-dirs = "4.0.0"
+toml_edit = { version = "0.22.9", features = ["serde"] }
+dirs = "5.0.1"
 log = { version = "0.4.17", features = ["serde"] }
