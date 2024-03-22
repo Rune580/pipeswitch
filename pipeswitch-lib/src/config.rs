@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
-use toml_edit::{table, Document, Item, Value};
+use toml_edit::{table, DocumentMut, Item, Value};
 
 use crate::PipeswitchError;
 
@@ -69,11 +69,11 @@ impl Config {
         config_dir().map(|dir| dir.join(DEFAULT_CONFIG_NAME))
     }
 
-    pub fn default_conf() -> Result<(Config, Document), PipeswitchError> {
+    pub fn default_conf() -> Result<(Config, DocumentMut), PipeswitchError> {
         Config::from_string(DEFAULT_CONFIG)
     }
 
-    pub fn load_from(path: &Path) -> Result<Option<(Config, Document)>, PipeswitchError> {
+    pub fn load_from(path: &Path) -> Result<Option<(Config, DocumentMut)>, PipeswitchError> {
         if !path.try_exists()? {
             Ok(None)
         } else {
@@ -81,12 +81,12 @@ impl Config {
         }
     }
 
-    pub fn write_to(&self, path: &Path, doc: Option<&Document>) -> Result<(), PipeswitchError> {
+    pub fn write_to(&self, path: &Path, doc: Option<&DocumentMut>) -> Result<(), PipeswitchError> {
         let text = Config::to_string(self, doc)?;
         Ok(fs::write(path, text)?)
     }
 
-    pub fn to_string(&self, old_document: Option<&Document>) -> Result<String, PipeswitchError> {
+    pub fn to_string(&self, old_document: Option<&DocumentMut>) -> Result<String, PipeswitchError> {
         let mut document = toml_edit::ser::to_document(&self)?;
         // General
         let general_item = Item::Table(
@@ -133,17 +133,17 @@ impl Config {
         Ok(document.to_string())
     }
 
-    pub fn from_string(input: &str) -> Result<(Self, Document), PipeswitchError> {
-        let document = Document::from_str(input)?;
+    pub fn from_string(input: &str) -> Result<(Self, DocumentMut), PipeswitchError> {
+        let document = DocumentMut::from_str(input)?;
         Ok((toml_edit::de::from_document(document.clone())?, document))
     }
 }
 
-pub fn clone_decor(to: &mut Document, from: &Document) {
+pub fn clone_decor(to: &mut DocumentMut, from: &DocumentMut) {
     for (key, item) in to.iter_mut() {
         clone_item_decor(item, from.get(&key))
     }
-    to.set_trailing(from.trailing());
+    to.set_trailing(from.trailing().clone());
 }
 
 pub fn clone_item_decor(to: &mut Item, from: Option<&Item>) {
@@ -155,7 +155,7 @@ pub fn clone_item_decor(to: &mut Item, from: Option<&Item>) {
                 *to_table.decor_mut() = from_table.decor().clone();
                 for (mut key, to_item) in to_table.iter_mut() {
                     if let Some((from_key, from_item)) = from_table.get_key_value(&key) {
-                        *key.decor_mut() = from_key.decor().clone();
+                        *key.dotted_decor_mut() = from_key.dotted_decor().clone();
                         clone_item_decor(to_item, Some(from_item));
                     }
                 }
@@ -165,7 +165,7 @@ pub fn clone_item_decor(to: &mut Item, from: Option<&Item>) {
                     *to.decor_mut() = from.decor().clone();
                     for (mut key, to_item) in to.iter_mut() {
                         if let Some((from_key, from_item)) = from.get_key_value(&key) {
-                            *key.decor_mut() = from_key.decor().clone();
+                            *key.dotted_decor_mut() = from_key.dotted_decor().clone();
                             clone_item_decor(to_item, Some(from_item));
                         }
                     }

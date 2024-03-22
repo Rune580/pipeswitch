@@ -9,7 +9,7 @@ repository = "https://github.com/Teascade/pipeswitch"
 documentation = "https://docs.rs/pipeswitchd"
 
 edition = "2021"
-rust-version = "1.62"
+rust-version = "1.77"
 
 keywords = ["multimedia", "audio", "linux", "pipewire", "utility"]
 categories = ["multimedia::audio", "command-line-utilities"]
